@@ -17,22 +17,22 @@ pub(crate) use win::*;
 
 #[cfg(target_os = "linux")]
 pub use gtk::*;
-#[cfg(target_os = "windows")]
-pub use winapi;
 #[cfg(not(target_os = "linux"))]
 pub use winit::*;
 
-use crate::Dispatcher;
+use crate::{Dispatcher, Result};
+
 use std::{collections::HashMap, sync::Mutex};
 
 use once_cell::sync::Lazy;
+use serde_json::Value;
 
 pub(crate) static CALLBACKS: Lazy<
     Mutex<
         HashMap<
             (i64, String),
             (
-                std::boxed::Box<dyn FnMut(&Dispatcher, i32, Vec<String>) -> i32 + Send>,
+                std::boxed::Box<dyn FnMut(&Dispatcher, i32, Vec<Value>) -> Result<()> + Send>,
                 Dispatcher,
             ),
         >,
@@ -46,5 +46,5 @@ pub(crate) static CALLBACKS: Lazy<
 struct RPC {
     id: i32,
     method: String,
-    params: Vec<String>,
+    params: Vec<Value>,
 }

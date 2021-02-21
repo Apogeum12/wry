@@ -10,6 +10,7 @@ use std::{
     hash::{Hash, Hasher},
 };
 
+use serde_json::Value;
 use url::Url;
 
 #[cfg(target_os = "linux")]
@@ -97,7 +98,7 @@ impl WebViewBuilder {
     /// javascript side, you can use the dispatcher to send them.
     pub fn add_callback<F>(mut self, name: &str, f: F) -> Self
     where
-        F: FnMut(&Dispatcher, i32, Vec<String>) -> i32 + Send + 'static,
+        F: FnMut(&Dispatcher, i32, Vec<Value>) -> Result<()> + Send + 'static,
     {
         let js = format!(
             r#"var name = {:?};
@@ -141,11 +142,10 @@ impl WebViewBuilder {
     pub fn build(self) -> Result<WebView> {
         let webview = InnerWebView::new(
             &self.window,
-            #[cfg(target_os = "macos")]
-            self.transparent,
             self.debug,
-            self.url,
             self.initialization_scripts,
+            self.url,
+            self.transparent,
         )?;
         Ok(WebView {
             window: self.window,
@@ -182,12 +182,7 @@ impl WebView {
     /// many more before starting WebView. To benefit from above features, create a
     /// [`WebViewBuilder`] instead.
     pub fn new_with_configs(window: Window, debug: bool, transparent: bool) -> Result<Self> {
-        #[cfg(target_os = "windows")]
-        let webview = InnerWebView::new(&window, debug, None, vec![])?;
-        #[cfg(target_os = "macos")]
-        let webview = InnerWebView::new(&window, debug, transparent, None, vec![])?;
-        #[cfg(target_os = "linux")]
-        let webview = InnerWebView::new(&window, debug, None, vec![])?;
+        let webview = InnerWebView::new(&window, debug, vec![], None, transparent)?;
         let (tx, rx) = channel();
         Ok(Self {
             window,
@@ -248,4 +243,18 @@ impl Dispatcher {
         self.0.send(js.to_string())?;
         Ok(())
     }
+}
+
+pub(crate) trait WV: Sized {
+    type Window;
+
+    fn new(
+        window: &Self::Window,
+        debug: bool,
+        scripts: Vec<String>,
+        url: Option<Url>,
+        transparent: bool,
+    ) -> Result<Self>;
+
+    fn eval(&self, js: &str) -> Result<()>;
 }

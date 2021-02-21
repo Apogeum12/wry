@@ -1,8 +1,10 @@
 use crate::platform::{CALLBACKS, RPC};
+use crate::webview::WV;
 use crate::{Error, Result};
 
 use std::rc::Rc;
 
+use gdk::RGBA;
 use gio::Cancellable;
 use gtk::{ApplicationWindow as Window, ApplicationWindowExt, ContainerExt, WidgetExt};
 use url::Url;
@@ -15,17 +17,21 @@ pub struct InnerWebView {
     webview: Rc<WebView>,
 }
 
-impl InnerWebView {
-    pub fn new(
+impl WV for InnerWebView {
+    type Window = Window;
+
+    fn new(
         window: &Window,
         debug: bool,
-        url: Option<Url>,
         scripts: Vec<String>,
+        url: Option<Url>,
+        transparent: bool,
     ) -> Result<Self> {
-        // Initialize webview widget
+        // Webview widget
         let manager = UserContentManager::new();
         let webview = Rc::new(WebView::with_user_content_manager(&manager));
 
+        // Message handler
         let wv = Rc::clone(&webview);
         manager.register_script_message_handler("external");
         let window_id = window.get_id() as i64;
@@ -39,16 +45,16 @@ impl InnerWebView {
                         let status = f(d, v.id, v.params);
 
                         let js = match status {
-                            0 => {
+                            Ok(()) => {
                                 format!(
                                     r#"window._rpc[{}].resolve("RPC call success"); window._rpc[{}] = undefined"#,
                                     v.id, v.id
                                 )
                             }
-                            _ => {
+                            Err(e) => {
                                 format!(
-                                    r#"window._rpc[{}].reject("RPC call fail"); window._rpc[{}] = undefined"#,
-                                    v.id, v.id
+                                    r#"window._rpc[{}].reject("RPC call fail with error {}"); window._rpc[{}] = undefined"#,
+                                    v.id, e, v.id
                                 )
                             }
                         };
@@ -70,11 +76,11 @@ impl InnerWebView {
             settings.set_enable_accelerated_2d_canvas(true);
             settings.set_javascript_can_access_clipboard(true);
 
-            // == Enable App cache == //
+            // Enable App cache
             settings.set_enable_offline_web_application_cache(true);
             settings.set_enable_page_cache(true);
 
-            // == Enable Smooth scrooling == //
+            // Enable Smooth scrooling
             settings.set_enable_smooth_scrolling(true);
 
             if debug {
@@ -83,17 +89,29 @@ impl InnerWebView {
             }
         }
 
+        // Transparent
+        if transparent {
+            webview.set_background_color(&RGBA {
+                red: 0.,
+                green: 0.,
+                blue: 0.,
+                alpha: 0.,
+            });
+        }
+
         if window.get_visible() {
             window.show_all();
         }
 
         let w = Self { webview };
 
+        // Initialize scripts
         w.init("window.external={invoke:function(x){window.webkit.messageHandlers.external.postMessage(x);}}")?;
         for js in scripts {
             w.init(&js)?;
         }
 
+        // Navigation
         if let Some(url) = url {
             w.webview.load_uri(url.as_str());
         }
@@ -101,12 +119,14 @@ impl InnerWebView {
         Ok(w)
     }
 
-    pub fn eval(&self, js: &str) -> Result<()> {
+    fn eval(&self, js: &str) -> Result<()> {
         let cancellable: Option<&Cancellable> = None;
         self.webview.run_javascript(js, cancellable, |_| ());
         Ok(())
     }
+}
 
+impl InnerWebView {
     fn init(&self, js: &str) -> Result<()> {
         if let Some(manager) = self.webview.get_user_content_manager() {
             let script = UserScript::new(
