@@ -355,6 +355,8 @@ fn _create_window(app: &GtkApp, attributes: InnerWindowAttributes) -> Result<App
         window.set_icon(Some(&load_icon(icon)?));
     }
 
+    window.add(gtk::GLArea::GLContext());
+
     Ok(window)
 }
 

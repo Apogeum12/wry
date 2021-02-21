@@ -6,7 +6,7 @@ Cross-platfrom WebView rendering library in Rust that supports all major desktop
 
 ```toml
 [dependencies]
-wry = "0.5.0"
+wry = "0.5.1"
 ```
 
 <div align="center">
@@ -77,4 +77,5 @@ WebKit is native on macOS so everything should be fine.
 WebView2 provided by Microsoft Edge Chromium is used. So wry supports Windows 7, 8, and 10.
 
 ## License
+
 Apache-2.0/MIT

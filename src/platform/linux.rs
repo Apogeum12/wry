@@ -4,9 +4,12 @@ use crate::{Error, Result};
 
 use std::rc::Rc;
 
-use gdk::RGBA;
+use gdk::{GLContext, RGBA};
 use gio::Cancellable;
-use gtk::{ApplicationWindow as Window, ApplicationWindowExt, ContainerExt, WidgetExt};
+use gtk::{
+    Application, ApplicationWindow as Window, ApplicationWindowExt, ContainerExt, GLArea,
+    GLAreaExt, Widget, WidgetExt,
+};
 use url::Url;
 use webkit2gtk::{
     SettingsExt, UserContentInjectedFrames, UserContentManager, UserContentManagerExt, UserScript,
@@ -30,6 +33,12 @@ impl WV for InnerWebView {
         // Webview widget
         let manager = UserContentManager::new();
         let webview = Rc::new(WebView::with_user_content_manager(&manager));
+
+        // test //
+        
+        let &GLAreaExt: area = 
+
+        // end //
 
         // Message handler
         let wv = Rc::clone(&webview);
