@@ -36,7 +36,9 @@ impl WV for InnerWebView {
         manager.register_script_message_handler("external");
         let window_id = window.get_id() as i64;
         manager.connect_script_message_received(move |_m, msg| {
+            // ==== deprecated function get_value() to get_js_value() ==== //
             if let Some(js) = msg.get_value() {
+                // ==== Completely deprecated function get_global_contex() ==== //
                 if let Some(context) = msg.get_global_context() {
                     if let Some(js) = js.to_string(&context) {
                         let v: RPC = serde_json::from_str(&js).unwrap();
