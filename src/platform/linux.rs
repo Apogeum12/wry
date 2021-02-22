@@ -4,12 +4,9 @@ use crate::{Error, Result};
 
 use std::rc::Rc;
 
-use gdk::{GLContext, RGBA};
+use gdk::RGBA;
 use gio::Cancellable;
-use gtk::{
-    Application, ApplicationWindow as Window, ApplicationWindowExt, ContainerExt, GLArea,
-    GLAreaExt, Widget, WidgetExt,
-};
+use gtk::{ApplicationWindow as Window, ApplicationWindowExt, ContainerExt, WidgetExt};
 use url::Url;
 use webkit2gtk::{
     SettingsExt, UserContentInjectedFrames, UserContentManager, UserContentManagerExt, UserScript,
@@ -33,12 +30,6 @@ impl WV for InnerWebView {
         // Webview widget
         let manager = UserContentManager::new();
         let webview = Rc::new(WebView::with_user_content_manager(&manager));
-
-        // test //
-        
-        let &GLAreaExt: area = 
-
-        // end //
 
         // Message handler
         let wv = Rc::clone(&webview);
@@ -82,6 +73,10 @@ impl WV for InnerWebView {
 
         // Enable webgl, webaudio, canvas features and others as default.
         if let Some(settings) = WebViewExt::get_settings(&*webview) {
+            // ==== Add hardware accelerate Policy OnDeman-Default Option ==== //
+            settings
+                .set_hardware_acceleration_policy(webkit2gtk::HardwareAccelerationPolicy::OnDemand);
+
             settings.set_enable_webgl(true);
             settings.set_enable_webaudio(true);
             settings.set_enable_accelerated_2d_canvas(true);

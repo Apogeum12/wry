@@ -316,22 +316,27 @@ fn _create_window(app: &GtkApp, attributes: InnerWindowAttributes) -> Result<App
         window.set_size_request(attributes.width as i32, attributes.height as i32);
     }
 
+    // ==== Set Subpixel for Antialias ==== //
+    window.connect_draw(|_, cr| {
+        cr.set_antialias(cairo::Antialias::Subpixel);
+        cr.set_source_rgba(0., 0., 0., 0.);
+        cr.set_operator(Operator::Source);
+        cr.paint();
+        cr.set_operator(Operator::Over);
+        Inhibit(false)
+    });
+
     if attributes.transparent {
+        window.set_app_paintable(true);
         if let Some(screen) = window.get_screen() {
             if let Some(visual) = screen.get_rgba_visual() {
                 window.set_visual(Some(&visual));
             }
         }
-
-        window.connect_draw(|_, cr| {
-            cr.set_source_rgba(0., 0., 0., 0.);
-            cr.set_operator(Operator::Source);
-            cr.paint();
-            cr.set_operator(Operator::Over);
-            Inhibit(false)
-        });
-        window.set_app_paintable(true);
     }
+
+    // Run with backend Gtk3 ?? //
+    //window.context(|_, c| {});
 
     window.set_skip_taskbar_hint(attributes.skip_taskbar);
     window.set_resizable(attributes.resizable);
@@ -355,8 +360,6 @@ fn _create_window(app: &GtkApp, attributes: InnerWindowAttributes) -> Result<App
         window.set_icon(Some(&load_icon(icon)?));
     }
 
-    window.add(gtk::GLArea::GLContext());
-
     Ok(window)
 }
 
@@ -370,6 +373,7 @@ fn _create_webview(
     let mut webview = WebViewBuilder::new(window)?
         .debug(attributes.debug)
         .transparent(attributes.transparent);
+
     for js in attributes.initialization_scripts {
         webview = webview.initialize_script(&js);
     }
