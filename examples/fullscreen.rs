@@ -5,6 +5,8 @@ fn main() -> Result<()> {
     let mut app = Application::new()?;
 
     let attributes = Attributes {
+        transparent: false,
+        debug: true,
         url: Some("https://www.wirple.com/".to_string()),
 
         //title: String::from("3D Render Test ^ ^"),
@@ -28,3 +30,8 @@ fn main() -> Result<()> {
 // Canvas score - Test 1: 542 - Test 2: 368
 // WebGL score - Test 1: 1390 - Test 2: 1342
 // Total score: 3642
+/* To Compare Brave 88.1.20.108
+    Canvas score - Test 1: 606 - Test 2: 1809
+    WebGL score - Test 1: 813 - Test 2: 819
+    Total score: 4047
+*/

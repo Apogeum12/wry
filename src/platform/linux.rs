@@ -36,7 +36,9 @@ impl WV for InnerWebView {
         manager.register_script_message_handler("external");
         let window_id = window.get_id() as i64;
         manager.connect_script_message_received(move |_m, msg| {
+            // ==== deprecated function get_value() to get_js_value() ==== //
             if let Some(js) = msg.get_value() {
+                // ==== Completely deprecated function get_global_contex() ==== //
                 if let Some(context) = msg.get_global_context() {
                     if let Some(js) = js.to_string(&context) {
                         let v: RPC = serde_json::from_str(&js).unwrap();
@@ -71,6 +73,10 @@ impl WV for InnerWebView {
 
         // Enable webgl, webaudio, canvas features and others as default.
         if let Some(settings) = WebViewExt::get_settings(&*webview) {
+            // ==== Add hardware accelerate Policy OnDeman-Default Option ==== //
+            settings
+                .set_hardware_acceleration_policy(webkit2gtk::HardwareAccelerationPolicy::OnDemand);
+
             settings.set_enable_webgl(true);
             settings.set_enable_webaudio(true);
             settings.set_enable_accelerated_2d_canvas(true);
